@@ -34,19 +34,19 @@ def test_parse_response_raises_error_for_unknown_format():
 
 def test_parse_response_uses_dict_by_default():
     client = DummyClient()
-    data = client.get()
+    data, _ = client.get()
     assert isinstance(data, list)
 
 
 def test_parse_response_uses_dataframe_when_specified():
     client = DummyClient()
-    data = client.get(format="df")
+    data, _ = client.get(format="df")
     assert isinstance(data, DataFrame)
 
 
 def test_parse_response_uses_geodataframe_when_specified():
     client = DummyClient(geo=True)
-    data = client.get(geo=True, format="geodf")
+    data, _ = client.get(geo=True, format="geodf")
     assert isinstance(data, GeoDataFrame)
 
 
