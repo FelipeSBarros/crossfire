@@ -1,5 +1,5 @@
 __version__ = "0.1.0"
-__all__ = ("cities", "occurrences", "states")
+__all__ = ("AsyncClient", "Client", "cities", "occurrences", "states")
 
 from functools import lru_cache
 
