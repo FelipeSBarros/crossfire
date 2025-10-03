@@ -56,7 +56,7 @@ from crossfire import states
 states()
 ```
 
-It is possible to get results in `DataFrae`:
+It is possible to get results in `DataFrame`:
 
 ```python
 states(format='df')
@@ -73,7 +73,7 @@ from crossfire import cities
 cities()
 ```
 
-It is possible to get results in `DataFrae`:
+It is possible to get results in `DataFrame`:
 
 ```python
 cities(format='df')
@@ -100,7 +100,7 @@ from crossfire import occurrences
 occurrences('813ca36b-91e3-4a18-b408-60b27a1942ef')
 ```
 
-It is possible to get results in `DataFrae`:
+It is possible to get results in `DataFrame`:
 
 ```python
 occurrences('813ca36b-91e3-4a18-b408-60b27a1942ef', format='df')
