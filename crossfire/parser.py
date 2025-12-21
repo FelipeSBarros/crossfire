@@ -72,29 +72,35 @@ class Metadata:
             cls.to_snake_case(key): value
             for key, value in response.get("pageMeta", {}).items()
         }
-        
+
         if headers:
             if "X-Last-Update" in headers:
                 kwargs["last_update"] = headers["X-Last-Update"]
-            
+
             if "X-Last-Update-Timestamp" in headers:
                 try:
-                    kwargs["last_update_timestamp"] = int(headers["X-Last-Update-Timestamp"])
+                    kwargs["last_update_timestamp"] = int(
+                        headers["X-Last-Update-Timestamp"]
+                    )
                 except (ValueError, TypeError):
                     kwargs["last_update_timestamp"] = None
-            
+
             if "X-Last-Update-State-Id" in headers:
-                kwargs["last_update_state_id"] = headers["X-Last-Update-State-Id"]
-            
+                kwargs["last_update_state_id"] = headers[
+                    "X-Last-Update-State-Id"
+                ]
+
             if "X-Last-Update-State" in headers:
                 kwargs["last_update_state"] = headers["X-Last-Update-State"]
-            
+
             if "X-Last-Update-State-Timestamp" in headers:
                 try:
-                    kwargs["last_update_state_timestamp"] = int(headers["X-Last-Update-State-Timestamp"])
+                    kwargs["last_update_state_timestamp"] = int(
+                        headers["X-Last-Update-State-Timestamp"]
+                    )
                 except (ValueError, TypeError):
                     kwargs["last_update_state_timestamp"] = None
-        
+
         for key in cls.__dataclass_fields__.keys() - kwargs.keys():
             kwargs[key] = None
         return cls(**kwargs)
