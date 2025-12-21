@@ -125,6 +125,7 @@ occurrences('813ca36b-91e3-4a18-b408-60b27a1942ef', format='geodf')
 | `format`                | ❌        | Format of the result                           | string                       | `'dict'`      | `'dict'`, `'df'` or `'geodf'`                                                                                                  |
 | `flat`                  | ❌        | Return nested columns as separate columns      | bool                         | `False`       | `True` or `False`                                                                                                              |
 
+**Note on Date Parameters:** When using `initial_date` and `final_date` parameters, be aware that the API operates in Brazil timezone (America/Sao_Paulo, UTC-3). All occurrence timestamps and date filtering are processed according to Brazil time. Make sure to account for timezone differences when filtering data by date ranges.
 
 ##### About `flat` parameter
 
@@ -150,6 +151,88 @@ occs[0].keys()
 ```
 
 By using the `flat=True parameter`, you ensure that all nested data is expanded into individual columns, simplifying data analysis and making it more straightforward to access specific details within your occurrence data.
+
+##### Response Metadata and Headers
+
+Starting with API version 2.2.1, the Fogo Cruzado API returns additional metadata headers on `/occurrences` endpoints to help you track data freshness and implement intelligent caching strategies.
+
+**Important:** All timestamps are returned in **Brazil timezone (America/Sao_Paulo, UTC-3)**, not UTC.
+
+###### Available Headers
+
+| Header Name                      | Type    | Description                                                                 |
+|----------------------------------|---------|-----------------------------------------------------------------------------|
+| `X-Last-Update`                  | string  | ISO 8601 timestamp with timezone offset (e.g., `2025-10-20T14:30:00-03:00`) |
+| `X-Last-Update-Timestamp`        | integer | Unix timestamp in seconds representing the last update                      |
+| `X-Last-Update-State-Id`         | string  | UUID of the filtered state (only present when filtering by state)          |
+| `X-Last-Update-State`            | string  | ISO 8601 timestamp for state-specific last update                           |
+| `X-Last-Update-State-Timestamp`  | integer | Unix timestamp in seconds for state-specific last update                    |
+
+These headers are automatically parsed and available in the `metadata` object returned by the `occurrences()` function.
+
+###### Usage Examples
+
+**Example 1: Accessing metadata fields**
+
+```python
+from crossfire import occurrences
+
+data, metadata = occurrences('813ca36b-91e3-4a18-b408-60b27a1942ef', format='df')
+
+# Access last update information
+print(f"Last update: {metadata.last_update}")
+print(f"Last update timestamp: {metadata.last_update_timestamp}")
+print(f"State ID: {metadata.last_update_state_id}")
+print(f"State last update: {metadata.last_update_state}")
+
+# Example output:
+# Last update: 2025-10-20T14:30:00-03:00
+# Last update timestamp: 1729445400
+# State ID: 813ca36b-91e3-4a18-b408-60b27a1942ef
+# State last update: 2025-10-20T14:25:00-03:00
+```
+
+**Example 2: Checking if data needs refreshing**
+
+```python
+from crossfire import occurrences
+from time import time
+
+# Get current data
+data, metadata = occurrences('813ca36b-91e3-4a18-b408-60b27a1942ef', format='df')
+
+# Store the last update timestamp
+last_sync = metadata.last_update_timestamp
+
+# Later, check if data needs refreshing (e.g., after 1 hour)
+current_time = int(time())
+if current_time - last_sync > 3600:  # 3600 seconds = 1 hour
+    print("Data is older than 1 hour, refreshing...")
+    data, metadata = occurrences('813ca36b-91e3-4a18-b408-60b27a1942ef', format='df')
+else:
+    print("Data is still fresh, using cached version")
+```
+
+**Example 3: State-specific synchronization**
+
+```python
+from crossfire import occurrences
+
+# Get data for Rio de Janeiro state
+rio_state_id = '813ca36b-91e3-4a18-b408-60b27a1942ef'
+data, metadata = occurrences(rio_state_id, format='df')
+
+# Use state-specific timestamp for more accurate tracking
+if metadata.last_update_state_timestamp:
+    print(f"Rio de Janeiro state last updated at: {metadata.last_update_state}")
+    print(f"Unix timestamp: {metadata.last_update_state_timestamp}")
+    
+    # Store this timestamp for state-specific cache invalidation
+    # This is more accurate than the general last_update timestamp
+    # when working with specific states
+```
+
+**Note on Timezone:** Remember that all timestamps returned by the API are in Brazil timezone (UTC-3). When comparing with local timestamps or implementing time-based logic, ensure you account for the timezone difference.
 
 ### Custom client
 
@@ -183,6 +266,7 @@ await client.occurrences('813ca36b-91e3-4a18-b408-60b27a1942ef')
 
 ### Contributors
 
+* [@davisaantos](https://github.com/davisaantos)
 * [@sergiospagnuolo](https://github.com/sergiospagnuolo)
 * [@silvadenisson](https://github.com/silvadenisson)
 * [@cuducos](https://github.com/cuducos)

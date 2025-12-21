@@ -52,6 +52,7 @@ def create_response(geo=False, has_next_page=False):
     response.status_code = 200
     response.text = dumps(data)
     response.json.return_value = data
+    response.headers = {}
     return response
 
 
@@ -105,3 +106,57 @@ def test_parse_response_uses_geodataframe_when_specified():
 def test_parse_response_raises_error_when_missing_coordinates():
     with raises(IncompatibleDataError):
         parse_response(create_response(), format="geodf")
+
+
+def test_parse_response_handles_last_update_headers():
+    response = create_response()
+    response.headers = {
+        "X-Last-Update": "2025-10-20T14:30:00-03:00",
+        "X-Last-Update-Timestamp": "1729445400",
+        "X-Last-Update-State-Id": "813ca36b-91e3-4a18-b408-60b27a1942ef",
+        "X-Last-Update-State": "2025-10-20T14:25:00-03:00",
+        "X-Last-Update-State-Timestamp": "1729445100",
+    }
+
+    _, metadata = parse_response(response)
+
+    assert metadata.last_update == "2025-10-20T14:30:00-03:00"
+    assert metadata.last_update_timestamp == 1729445400
+    assert (
+        metadata.last_update_state_id == "813ca36b-91e3-4a18-b408-60b27a1942ef"
+    )
+    assert metadata.last_update_state == "2025-10-20T14:25:00-03:00"
+    assert metadata.last_update_state_timestamp == 1729445100
+
+
+def test_parse_response_handles_missing_last_update_headers():
+    response = create_response()
+    response.headers = {}
+
+    _, metadata = parse_response(response)
+
+    assert metadata.last_update is None
+    assert metadata.last_update_timestamp is None
+    assert metadata.last_update_state_id is None
+    assert metadata.last_update_state is None
+    assert metadata.last_update_state_timestamp is None
+
+    assert metadata.page_count == 1
+    assert not metadata.has_next_page
+
+
+def test_parse_response_handles_partial_headers():
+    response = create_response()
+    response.headers = {
+        "X-Last-Update": "2025-10-20T14:30:00-03:00",
+        "X-Last-Update-Timestamp": "1729445400",
+    }
+
+    _, metadata = parse_response(response)
+
+    assert metadata.last_update == "2025-10-20T14:30:00-03:00"
+    assert metadata.last_update_timestamp == 1729445400
+
+    assert metadata.last_update_state_id is None
+    assert metadata.last_update_state is None
+    assert metadata.last_update_state_timestamp is None
